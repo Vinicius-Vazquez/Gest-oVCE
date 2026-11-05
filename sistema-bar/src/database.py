@@ -4,12 +4,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Tenta pegar a URL do Supabase configurada nos segredos do Streamlit ou variáveis de ambiente
+# Pega a URL do banco dos segredos do Streamlit ou usa o SQLite local como padrão
 DATABASE_URL = st.secrets.get("DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./data/bar_database.db"))
 
 # Ajuste para compatibilidade com SQLAlchemy caso venha com o prefixo antigo do postgres
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Força o uso do driver psycopg2 se for PostgreSQL para evitar o erro do psycopg3
+if DATABASE_URL.startswith("postgresql://") and not "+" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # Cria a engine do SQLAlchemy de acordo com o banco escolhido
 if "sqlite" in DATABASE_URL:
